@@ -15,7 +15,7 @@ const { authUser, requireLogin, requireAdmin } = require('../middleware/auth');
  *
  */
 
-router.get('/', authUser, requireLogin, async function(req, res, next) {
+router.get('/', authUser, requireLogin, async function (req, res, next) {
   try {
     let users = await User.getAll();
     return res.json({ users });
@@ -35,7 +35,7 @@ router.get('/', authUser, requireLogin, async function(req, res, next) {
  *
  */
 
-router.get('/:username', authUser, requireLogin, async function(
+router.get('/:username', authUser, requireLogin, async function (
   req,
   res,
   next
@@ -63,26 +63,34 @@ router.get('/:username', authUser, requireLogin, async function(
  *
  */
 
-router.patch('/:username', authUser, requireLogin, requireAdmin, async function(
-  req,
-  res,
-  next
-) {
-  try {
-    if (!req.curr_admin && req.curr_username !== req.params.username) {
-      throw new ExpressError('Only  that user or admin can edit a user.', 401);
+// Bug #3
+router.patch('/:username', authUser, requireLogin,
+  async function (
+    req,
+    res,
+    next
+  ) {
+    try {
+      if (!req.curr_admin && req.curr_username !== req.params.username) {
+        throw new ExpressError('Only that user or admin can edit a user.', 401);
+      }
+
+      // get fields to change; remove token so we don't try to change it
+      let fields = { ...req.body };
+      console.log('line 79:', fields);
+      delete fields._token;
+
+      // Bug #4
+      if (fields.admin || fields.password || fields.username) {
+        throw new ExpressError('Only first_name, last_name, phone, and email can be changed.', 401);
+      }
+
+      let user = await User.update(req.params.username, fields);
+      return res.json({ user });
+    } catch (err) {
+      return next(err);
     }
-
-    // get fields to change; remove token so we don't try to change it
-    let fields = { ...req.body };
-    delete fields._token;
-
-    let user = await User.update(req.params.username, fields);
-    return res.json({ user });
-  } catch (err) {
-    return next(err);
-  }
-}); // end
+  }); // end
 
 /** DELETE /[username]
  *
@@ -94,7 +102,7 @@ router.patch('/:username', authUser, requireLogin, requireAdmin, async function(
  * If user cannot be found, return a 404 err.
  */
 
-router.delete('/:username', authUser, requireAdmin, async function(
+router.delete('/:username', authUser, requireAdmin, async function (
   req,
   res,
   next

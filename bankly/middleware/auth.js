@@ -44,6 +44,7 @@ function requireAdmin(req, res, next) {
  *
  **/
 
+// Bug #6
 function authUser(req, res, next) {
   try {
     const token = req.body._token || req.query._token;
@@ -54,7 +55,7 @@ function authUser(req, res, next) {
     }
     return next();
   } catch (err) {
-    err.status = 401;
+    res.status = 401;
     return next(err);
   }
 } // end

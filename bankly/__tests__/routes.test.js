@@ -114,6 +114,7 @@ describe("GET /users", function () {
     const response = await request(app)
       .get("/users")
       .send({ _token: tokens.u1 });
+    console.log(response.body)
     expect(response.statusCode).toBe(200);
     expect(response.body.users.length).toBe(3);
   });
@@ -151,6 +152,23 @@ describe("PATCH /users/[username]", function () {
       .patch("/users/u1")
       .send({ _token: tokens.u2 }); // wrong user!
     expect(response.statusCode).toBe(401);
+  });
+
+  // Bug #3
+  test("should patch data if right user", async function () {
+    const response = await request(app)
+      .patch("/users/u1")
+      .send({ _token: tokens.u1, first_name: "new-fn1" }); // u3 is admin
+    expect(response.statusCode).toBe(200);
+    expect(response.body.user).toEqual({
+      username: "u1",
+      first_name: "new-fn1",
+      last_name: "ln1",
+      email: "email1",
+      phone: "phone1",
+      admin: false,
+      password: expect.any(String)
+    });
   });
 
   test("should patch data if admin", async function () {
